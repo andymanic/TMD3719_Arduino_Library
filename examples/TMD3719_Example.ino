@@ -67,7 +67,8 @@ Written by Andrew McDonald
 	void setup() {
 		Wire.begin();
 		Serial.begin(115200);
-		sensor.begin();
+		TMD3719_Config cfg;
+		sensor.begin(Wire, cfg);
 	}
 
 	void loop() {
