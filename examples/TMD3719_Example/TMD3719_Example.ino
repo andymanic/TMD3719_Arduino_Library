@@ -67,43 +67,61 @@ Written by Andrew McDonald
 	void setup() {
 		Wire.begin();
 		Serial.begin(115200);
-		TMD3719_Config cfg;
-		sensor.begin(Wire, cfg);
-	}
+		
+		sensor.begin();
 
-	void loop() {
-		ProximityResults prox = sensor.getProximityResults();
-		if (prox.EvalChannel == 0)
+    /* // Alternate setup with custom settings
+    uint8_t config[8] = {
+      TMD3719_MEAS_MODE0_ALS_SET_A_DIODE, // Diode Set
+      TMD3719_MOD_GAIN_64X, // Gain
+      0x00, // AGC Enable
+      0x06, // AGC Max Gain
+      TMD3719_PROX_GAIN_4X, // Proximity Gain
+      TMD3719_PROX_FILTER_1, // Proximity Filter
+      TMD3719_ISINK_SCALER_0p5, // ISINK Scaler
+      TMD3719_ISINK_CURRENT_0mA // ISINK Current
+    };
+    sensor.begin(Wire, config);
+    */
+
+    while (!Serial) { ;}
+
+    int *prox = sensor.getProximityResults();
+		if (prox[3] == 0)
 		{
 		Serial.print("ProximityOne: ");
-		Serial.print(prox.ProximityOne);
+		Serial.print(prox[1]);
 		
 		}
 		else
 		{
 			Serial.print("ProximityZero: ");
-			Serial.print(prox.ProximityZero);
+			Serial.print(prox[0]);
 		}
 		Serial.print(", ProximityRatio: ");
-		Serial.print(prox.ProximityRatio);
+		Serial.print(prox[2]);
 		Serial.println();
 
-		ALSResults als = sensor.getALSResults();
+		int *als = sensor.getALSResults();
 		Serial.print("Clear: ");
-		Serial.print(als.Clear);
+		Serial.print(als[0]);
 		Serial.print(", Red: ");
-		Serial.print(als.Red);
+		Serial.print(als[1]);
 		Serial.print(", Green: ");
-		Serial.print(als.Green);
+		Serial.print(als[2]);
 		Serial.print(", Blue: ");
-		Serial.print(als.Blue);
+		Serial.print(als[3]);
 		Serial.print(", Leakage: ");
-		Serial.print(als.Leakage);
+		Serial.print(als[4]);
 		Serial.print(", Wideband: ");
-		Serial.print(als.Wideband);
+		Serial.print(als[5]);
 		Serial.print(", IR1: ");
-		Serial.print(als.IR1);
+		Serial.print(als[6]);
 		Serial.print(", IR2: ");
-		Serial.print(als.IR2);
+		Serial.print(als[7]);
 		Serial.println();
+	}
+
+	void loop() {
+		
 	}

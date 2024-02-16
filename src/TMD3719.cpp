@@ -8,7 +8,7 @@ TMD3719::TMD3719()
 
 }
 
-bool TMD3719::begin(TwoWire& wirePort = Wire, TMD3719_Config& cfg)
+bool TMD3719::begin(TwoWire& wirePort, uint8_t config[8])
 {
 	_i2cPort = &wirePort;
 	uint8_t id = getID();
@@ -16,7 +16,20 @@ bool TMD3719::begin(TwoWire& wirePort = Wire, TMD3719_Config& cfg)
 	{
 		return (false);
 	}
-	changeConfig(cfg);
+	if (config == NULL)
+	{
+		uint8_t DefaultConfig[8] = { TMD3719_MEAS_MODE0_ALS_SET_A_DIODE,
+			TMD3719_MOD_GAIN_64X,
+			0x00,
+			0x06,
+			TMD3719_PROX_GAIN_4X,
+			TMD3719_PROX_FILTER_1,
+			TMD3719_ISINK_SCALER_0p5,
+			TMD3719_ISINK_CURRENT_0mA
+		};
+		config = DefaultConfig;
+	}
+	changeConfig(config);
 	return (true);
 }
 
@@ -53,17 +66,17 @@ bool TMD3719::dataAvailable(uint8_t dataType)
 	}
 }
 
-void TMD3719::changeConfig(TMD3719_Config& cfg)
+void TMD3719::changeConfig(uint8_t cfg[8])
 {
 	writeRegister(TMD3719_REG_ENABLE, 0x00); // Disable before changing settings
-	setDiodeSet(cfg.ALSDiodeSet);
-	setGain(cfg.gain);
-	setAGCEnabled(cfg.automatic_gain_control);
-	setMaxAGCGain(cfg.agcGain);
-	setProxGain(cfg.proximityGain);
-	setProxFilter(cfg.proxFilterSetting);
-	setISINKScaler(cfg.ISINKScaler);
-	setISINKCurrent(cfg.ISINKCurrent);
+	setDiodeSet(cfg[0]);
+	setGain(cfg[1]);
+	setAGCEnabled(cfg[2]);
+	setMaxAGCGain(cfg[3]);
+	setProxGain(cfg[4]);
+	setProxFilter(cfg[5]);
+	setISINKScaler(cfg[6]);
+	setISINKCurrent(cfg[7]);
 	writeRegister(TMD3719_REG_ENABLE, 0b01011001); // enable everything
 }
 
@@ -101,7 +114,7 @@ void TMD3719::setIntegrationStep(uint16_t AStep)
 {
 	// 16 bit, 0x85 low byte, 0x86 high byte
 	uint8_t highByte = (uint8_t)((AStep & 0xFF00) >> 8);
-	uint8_t lowByte = (unit8_t)(AStep & 0x00FF);
+	uint8_t lowByte = (uint8_t)(AStep & 0x00FF);
 	writeRegister(TMD3719_REG_ASTEP, lowByte);
 	writeRegister(TMD3719_REG_ASTEP + 1, highByte);
 }
@@ -120,15 +133,10 @@ void TMD3719::setGain(uint8_t gain)
 	writeRegister(TMD3719_REG_MOD_GAIN_4_5, fullGain);
 	writeRegister(TMD3719_REG_MOD_GAIN_6_7, fullGain);
 }
-void TMD3719::setAGCEnabled(bool agcEn)
+void TMD3719::setAGCEnabled(uint8_t agcEn)
 {
 	// AGC_ENABLE for all modulators, either 0x00 for off or 0xFF for all
-	uint8_t AGC = 0x00;
-	if (agcEn)
-	{
-		AGC = 0xFF;
-	}
-	writeRegister(TMD3719_REG_AGC_ENABLE, AGC);
+	writeRegister(TMD3719_REG_AGC_ENABLE, agcEn);
 }
 void TMD3719::setMaxAGCGain(uint8_t gain)
 {
@@ -169,19 +177,19 @@ void TMD3719::setISINKCurrent(uint8_t current)
 // Identification
 uint8_t TMD3719::getAUXID()
 {
-	return readRegister(TMD3719_REG_AUXID)
+	return readRegister(TMD3719_REG_AUXID);
 }
 uint8_t TMD3719::getREVID()
 {
-	return readRegister(TMD3719_REG_REVID)
+	return readRegister(TMD3719_REG_REVID);
 }
 uint8_t TMD3719::getID()
 {
-	return readRegister(TMD3719_REG_ID)
+	return readRegister(TMD3719_REG_ID);
 }
 
 // ALS Results
-ALSResults TMD3719::getALSResults()
+int* TMD3719::getALSResults()
 {
 	uint8_t ATIME = readRegister(TMD3719_REG_ATIME);
 	uint16_t ASTEP = get16bValue(TMD3719_REG_ASTEP);
@@ -190,32 +198,32 @@ ALSResults TMD3719::getALSResults()
 	uint8_t astatus = readRegister(TMD3719_REG_ASTATUS); // read ASTATUS reg to start fresh sampling
 	delay(sampleTime); // delay by sample time
 	while (dataAvailable(ALS_VALID) == false) { delay(POLLING_DELAY); } // wait for AVALID to go high
-	ALSResults als;
-	als.Clear = get24bValue(TMD3719_REG_ADATA0);
-	als.Red = get24bValue(TMD3719_REG_ADATA1);
-	als.Green = get24bValue(TMD3719_REG_ADATA2);
-	als.Blue = get24bValue(TMD3719_REG_ADATA3);
-	als.Leakage = get24bValue(TMD3719_REG_ADATA4);
-	als.Wideband = get24bValue(TMD3719_REG_ADATA5);
-	als.IR1 = get24bValue(TMD3719_REG_ADATA6);
-	als.IR2 = get24bValue(TMD3719_REG_ADATA7);
-	return(als);
+	int *als;
+	als[0] = get24bValue(TMD3719_REG_ADATA0);
+	als[1] = get24bValue(TMD3719_REG_ADATA1);
+	als[2] = get24bValue(TMD3719_REG_ADATA2);
+	als[3] = get24bValue(TMD3719_REG_ADATA3);
+	als[4] = get24bValue(TMD3719_REG_ADATA4);
+	als[5] = get24bValue(TMD3719_REG_ADATA5);
+	als[6] = get24bValue(TMD3719_REG_ADATA6);
+	als[7] = get24bValue(TMD3719_REG_ADATA7);
+	return als;
 }
 
 // Proximity Results
-ProximityResults TMD3719::getProximityResults()
+int* TMD3719::getProximityResults()
 {
 	// read PDATA to trigger sample taking (pstatus??)
 	uint8_t pstatus = readRegister(TMD3719_REG_PSTATUS); // read PSTATUS reg to start fresh sampling
 	
 	while (dataAvailable(PROX_VALID) == false) { delay(POLLING_DELAY); } // wait for PVALID to go high
-	ProximityResults prox;
-	prox.ProximityZero = get16bValue(TMD3719_REG_PDATA0);
-	prox.ProximityOne = get16bValue(TMD3719_REG_PDATA1);
-	prox.ProximityRatio = get16bValue(TMD3719_REG_PDATAR);
+	int *prox;
+	prox[0] = get16bValue(TMD3719_REG_PDATA0);
+	prox[1] = get16bValue(TMD3719_REG_PDATA1);
+	prox[2] = get16bValue(TMD3719_REG_PDATAR);
 	uint8_t pcfg6 = readRegister(TMD3719_REG_PCFG6);
-	prox.EvalChannel = pcfg6 >> 7; // return just the eval channel
-	return(prox);
+	prox[3] = pcfg6 >> 7; // return just the eval channel
+	return prox;
 }
 
 
@@ -237,7 +245,7 @@ int TMD3719::get24bValue(uint8_t reg)
 uint8_t TMD3719::readRegister(uint8_t address)
 {
 	_i2cPort->beginTransmission(TMD3719_ADDR);
-	_i2cPort->write(addr);
+	_i2cPort->write(address);
 	_i2cPort->endTransmission();
 
 	_i2cPort->requestFrom(TMD3719_ADDR, 1);

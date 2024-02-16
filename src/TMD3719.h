@@ -6,76 +6,6 @@
 #include "Wire.h"
 class TMD3719 {
 public:
-	TMD3719();
-	bool begin(TwoWire& wirePort = Wire, TMD3719_Config& cfg);
-	bool dataAvailable(uint8_t dataType);  // 0x40 for ALS, 0x80 for proximity
-	void changeConfig(TMD3719_Config& cfg); // as PON needs cycling during changes, wrapped method needed
-	void calibrateProximityOffset();
-
-	uint8_t getAUXID();
-	uint8_t getREVID();
-	uint8_t getID();
-
-	ALSResults getALSResults();
-
-	ProximityResults getProximityResults();
-
-	// All config options - incomplete
-	struct TMD3719_Config
-	{
-		uint8_t ALSDiodeSet = TMD3719_MEAS_MODE0_ALS_SET_A_DIODE;
-		uint8_t gain = TMD3719_MOD_GAIN_64X;
-		bool automatic_gain_control = false;
-		uint8_t agcGain = 0x06;
-		uint8_t proximityGain = TMD3719_PROX_GAIN_4X;
-		uint8_t proxFilterSetting = TMD3719_PROX_FILTER_1;
-		uint8_t ISINKScaler = TMD3719_ISINK_SCALER_0p5;
-		uint8_t ISINKCurrent = TMD3719_ISINK_CURRENT_0mA;
-	};
-
-	struct ALSResults
-	{
-		int Clear;
-		int Red;
-		int Green;
-		int Blue;
-		int Leakage;
-		int Wideband;
-		int IR1;
-		int IR2;
-	};
-	struct ProximityResults
-	{
-		int ProximityZero;
-		int ProximityOne;
-		int ProximityRatio;
-		int EvalChannel;
-	};
-
-private:
-	TwoWire	*_i2cPort;
-	int get16bValue(uint8_t reg);
-	int get24bValue(uint8_t reg);
-	uint8_t readRegister(uint8_t address);
-	void writeRegister(uint8_t address, uint8_t data);
-
-	void setDiodeSet(uint8_t set); 
-
-	void setIntegrationTime(uint8_t ATime); // number of integration steps - 0 = ASTEP time, 255 = 256 x ASTEP time
-	void setIntegrationStep(uint16_t AStep); // steps of 2.71us - 0 = 2.71us, 65535 = 178ms
-
-	void setGain(uint8_t gain);				// light sensor gain
-	void setAGCEnabled(bool agcEn);			// enable automatic gain control
-	void setMaxAGCGain(uint8_t gain);			// automatic gain control setting
-	void setProxGain(uint8_t pGain);
-
-	void setProxFilterEnabled(bool proxEn);			// enable proximity filter
-	void setProxFilter(uint8_t filter);				// proximity filter setting
-
-	void setISINKScaler(uint8_t scaler);
-	void setISINKCurrent(uint8_t current);
-
-
 
 #define TMD3719_ADDR							0x39
 #define POLLING_DELAY							5		// millisecond delay between checking registers
@@ -175,7 +105,7 @@ private:
 #define TMD3719_REG_FIFO_STATUS					0xFB
 #define TMD3719_REG_FDATA						0xFC
 
-// Enable sensors
+	// Enable sensors
 #define TMD3719_ENABLE_FLICKER					0x40
 #define TMD3719_ENABLE_ALS						0x10
 #define TMD3719_ENABLE_PROX						0x08
@@ -236,6 +166,48 @@ private:
 // Data Valid Bits
 #define ALS_VALID								0x40
 #define PROX_VALID								0x80
+
+	
+	TMD3719();
+	bool begin(TwoWire& wirePort = Wire, uint8_t config[8] = NULL);
+	bool dataAvailable(uint8_t dataType);  // 0x40 for ALS, 0x80 for proximity
+	// as PON needs cycling during changes, wrapped method needed
+	void changeConfig(uint8_t config[8]); // 
+	void calibrateProximityOffset();
+
+	uint8_t getAUXID();
+	uint8_t getREVID();
+	uint8_t getID();
+
+	int* getALSResults();
+
+	int* getProximityResults();
+
+private:
+	TwoWire	*_i2cPort;
+	int get16bValue(uint8_t reg);
+	int get24bValue(uint8_t reg);
+	uint8_t readRegister(uint8_t address);
+	void writeRegister(uint8_t address, uint8_t data);
+
+	void setDiodeSet(uint8_t set); 
+
+	void setIntegrationTime(uint8_t ATime); // number of integration steps - 0 = ASTEP time, 255 = 256 x ASTEP time
+	void setIntegrationStep(uint16_t AStep); // steps of 2.71us - 0 = 2.71us, 65535 = 178ms
+
+	void setGain(uint8_t gain);				// light sensor gain
+	void setAGCEnabled(uint8_t agcEn);			// enable automatic gain control
+	void setMaxAGCGain(uint8_t gain);			// automatic gain control setting
+	void setProxGain(uint8_t pGain);
+
+	void setProxFilter(uint8_t filter);				// proximity filter setting
+
+	void setISINKScaler(uint8_t scaler);
+	void setISINKCurrent(uint8_t current);
+
+
+
+
 
 
 };

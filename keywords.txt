@@ -2,10 +2,7 @@
 # Classes and structs (KEYWORD1)
 #######################################
 
-TMD3719::ALSResults	KEYWORD1
-TMD3719::ProximityResults	KEYWORD1
 TMD3719	KEYWORD1
-TMD3719::TMD3719_Config	KEYWORD1
 
 #######################################
 # Methods (KEYWORD2)
@@ -32,7 +29,6 @@ setGain	KEYWORD2
 setAGCEnabled	KEYWORD2
 setMaxAGCGain	KEYWORD2
 setProxGain	KEYWORD2
-setProxFilterEnabled	KEYWORD2
 setProxFilter	KEYWORD2
 setISINKScaler	KEYWORD2
 setISINKCurrent	KEYWORD2
